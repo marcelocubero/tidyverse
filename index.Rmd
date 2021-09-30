@@ -7,4 +7,144 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Ejemplos de Tidyverse
+# Preparativos
+
+
+
+## Carga de paquetes
+ 
+```{r librerías, message= FALSE}
+# dplyr
+library(dplyr)
+
+# ggplot2
+library(ggplot2)
+```
+
+## Carga de datos
+
+```{r datos}
+## rios
+rios <-
+  read.csv(file = 'https://raw.githubusercontent.com/tpb728O-programaciongeoespacialr/2021ii/main/datos/hidrologia/fdc/fdc.csv')
+
+## covid
+covid <- 
+  read.csv(
+    file='https://raw.githubusercontent.com/tpb728O-programaciongeoespacialr/2021ii/main/datos/minsalud/covid/ultimafecha_CSV_GENERAL.csv', 
+    sep = ","
+  )
+
+```
+
+
+## dplyr
+
+### Mutate()
+
+```{r estructura}
+# Estructura del data frame
+str(rios)
+
+```
+
+
+```{r despliegue}
+# primeros M
+slice_head(rios, n = 10)
+# últimos n
+slice_tail(rios, n = 10)
+# aleatorio
+slice_sample(rios, n = 10)
+
+
+```
+
+
+```{r fe}
+# Función enlazada 
+rios %>% slice_head(n = 10) %>% slice_tail(n = 2)
+```
+
+
+```{r fa}
+#función anidada
+slice_tail( slice_head(rios, n = 10), n = 2)
+```
+
+
+```{r ejemplo}
+rios <-
+  rios %>%
+  rename(fecha = Tiempo,
+         pandora = Pandora.mm..637km2.,
+         banano = Banano.mm..90km2.) %>%
+  mutate(fecha = as.Date(fecha, format = "%m/%d/%Y"),
+         promedio = (pandora + banano) / 2)
+slice_head(rios, n = 7)
+```
+
+### Select()
+
+```{r select}
+# Selección, renombramiento y conversión de columnas
+covid_columnas_seleccionadas <-
+  covid %>%
+  select(FECHA, muj_posi, hom_posi) %>%
+  rename(
+    fecha = FECHA,
+    positivos_mujeres = muj_posi,
+    positivos_hombres = hom_posi
+  ) %>%
+  mutate(fecha = as.Date(fecha, format = "%d/%m/%Y"))
+
+slice_sample(covid_columnas_seleccionadas, n = 5)
+```
+
+### Filter()
+```{r filter}
+covid_filtrado <-
+  covid %>%
+  select(FECHA, nue_posi) %>%
+  rename(fecha = FECHA, positivos_nuevos = nue_posi) %>%
+  mutate(fecha = as.Date(fecha, format = "%d/%m/%Y")) %>%
+  filter(positivos_nuevos >= 2500)
+slice_head(covid_filtrado, n = 10)
+```
+
+
+### Arrange()
+```{r arrange}
+covid_filtrado_ordenado_x_positivos_nuevos <-
+  covid %>%
+  select(FECHA, nue_posi) %>%
+  rename(fecha = FECHA, positivos_nuevos = nue_posi) %>%
+  mutate(fecha = as.Date(fecha, format = "%d/%m/%Y")) %>%
+  filter(positivos_nuevos >= 2500) %>%
+  arrange(desc(positivos_nuevos))
+
+slice_head(covid_filtrado_ordenado_x_positivos_nuevos, n = 10)
+```
+
+### Sumarise()
+```{r sumarise}
+# Selección, renombramiento, filtrado y conversión de columnas
+covid_positivos_nuevos_sumarizado_x_mes <-
+  covid %>%
+  select(FECHA, nue_posi) %>%
+  rename(fecha = FECHA, positivos_nuevos = nue_posi) %>%
+  mutate(fecha = as.Date(fecha, format = "%d/%m/%Y")) %>%
+  group_by(anio = format(fecha,"%Y"), mes = format(fecha,"%m")) %>%
+  summarise(suma_positivos = sum(positivos_nuevos))
+
+# Despliegue del data frame con los resultados
+covid_positivos_nuevos_sumarizado_x_mes
+
+```
+
+
+
+
+
+
+
